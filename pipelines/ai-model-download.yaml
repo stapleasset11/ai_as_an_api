@@ -1,0 +1,39 @@
+context_parser: pypyr.parser.keyvaluepairs
+steps:
+  - name: pypyr.steps.contextsetf
+    in:
+      contextSetf:
+        local_dest_dir: models/spam-sms
+        hf_repo_id: stapleasset/spam-detector
+        file_keys: [
+          "exports/spam-sms/spam-classifer-metadata.json",
+          "exports/spam-sms/spam-classifer-tokenizer.json",
+          "exports/spam-sms/spam-model.h5",
+        ]
+  - name: pypyr.steps.py
+    in:
+      py: |
+        import pathlib
+        import os
+        print(os.environ.get("ACCESS_TOKEN"))
+        from dotenv import load_dotenv
+        from huggingface_hub import hf_hub_download, login
+
+        load_dotenv()
+
+        hf_token = os.getenv("ACCESS_TOKEN")
+        if hf_token:
+            login(token=hf_token)
+
+        dest_path = pathlib.Path(local_dest_dir).resolve()
+        dest_path.mkdir(exist_ok=True, parents=True)
+
+        for fname in file_keys:
+            hf_hub_download(
+                repo_id=hf_repo_id,
+                filename=fname,
+                local_dir=dest_path,
+                local_dir_use_symlinks=False,
+                token=hf_token  # can also be None for public models
+            )
+
