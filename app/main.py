@@ -32,6 +32,7 @@ def on_startup():
     )
     DB_SESSION = db.get_session()
     sync_table(SMSInference)
+    
 
 @app.get("/")
 def read_index(q:Optional[str] = None):
@@ -47,14 +48,16 @@ def create_inference(query:schema.Query):
     # NoSQL -> cassandra -> DataStax AstraDB
     return obj
 
-@app.get("/inferences")
-def list_inferences():
+
+@app.get("/inferences") # /?q=this is awesome
+def list_inference():
     q = SMSInference.objects.all()
     print(q)
     return list(q)
 
-@app.get("/inferences/{my_uuid}")
-def read_inferences(my_uuid):
+
+@app.get("/inferences/{my_uuid}") # /?q=this is awesome
+def read_inference(my_uuid):
     obj = SMSInference.objects.get(uuid=my_uuid)
     return obj
 
@@ -67,7 +70,7 @@ def fetch_rows(
     stmt.fetch_size = fetch_size
     result_set = session.execute(stmt)
     has_pages = result_set.has_more_pages
-    yield "uuid,label,confidence,query,version\n"
+    yield "uuid,label,confidence,query,model_version\n"
     while has_pages:
         for row in result_set.current_rows:
             yield f"{row['uuid']},{row['label']},{row['confidence']},{row['query']},{row['model_version']}\n"
